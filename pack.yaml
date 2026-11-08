@@ -1,0 +1,171 @@
+# My pack (my-pack): a Halo pack made with `halo pack new`. HALO-PACK.md says how to work on it; README.md
+# lists every file. Every value here is checked at install: `halo pack test .` runs every check.
+id: my-pack
+name: My pack
+version: 0.1.0
+description: A Halo pack started from the template
+author: your name
+license: MIT
+halo_api:
+  min: '1.1'
+  max: '1.9'
+halo:
+  min: '3.3'
+capabilities: [my-pack.work]
+requires:
+- kind: command
+  name: rg
+  version: '>=13'
+  install:
+    windows: winget install BurntSushi.ripgrep.MSVC
+    linux: sudo apt install ripgrep
+    mac: brew install ripgrep
+  url: https://github.com/BurntSushi/ripgrep
+  license: MIT OR Unlicense
+  why: searches the project's files for the pack's search command, its rg MCP server and its TODO hook
+  used_by: ['mcp:rg', hooks/rg_todos.py]
+contributes:
+  agents: [agents/lead.yaml, agents/checker.yaml]
+  teams: [teams/crew.yaml]
+  skills: skills
+  commands: commands
+  hooks: hooks/hooks.json
+  mcp:
+  - name: words
+    description: counts the words and lines of a text file
+  - name: rg
+    description: searches the project's files with ripgrep (rg), one line per match
+  studio:
+    sections:
+    - id: home
+      title: My pack
+      blurb: The pack's notes, its rows and its own panel
+      help: What the pack shows in Studio. Each panel's ? says where its data comes from.
+      panels:
+      - id: notes
+        title: Notes
+        kind: markdown
+        source: studio/notes.md
+        w: 12
+        h: 30
+        help: The pack's notes, from studio/notes.md in its folder.
+      - id: rows
+        title: Rows
+        kind: table
+        source: data:rows.json
+        columns: [item, state, note]
+        w: 12
+        h: 30
+        help: |-
+          rows.json in the pack's data folder (~/.halo/packs/.data/my-pack/), a list of rows the pack's code writes
+          with ext.write_private("my-pack", "rows.json", ...). Empty until it does.
+      - id: view
+        title: The pack's own panel
+        kind: bundle
+        source: studio/view.js
+        w: 24
+        h: 20
+        help: studio/view.js draws this panel; it runs once the owner grants studio-script.
+    palette:
+    - id: open-notes
+      label: 'My pack: open the notes'
+      action: route:home/notes
+  fleet:
+    capabilities:
+    - name: my-pack.work
+      description: Drafts and checks My pack's work on a harness that runs the pack
+      requires:
+        runtimes: [python]
+      capacity:
+        parallel: 1
+    inspector:
+    - label: 'My pack: what a part needs'
+      source: fleet/notes.md
+    mission:
+      metadata:
+        pack: my-pack
+  artifacts: [report]
+  events: [note.added]
+  workflows: [flow]
+  policy:
+  - id: guard
+    run: ['${halo_python}', '${CLAUDE_PLUGIN_ROOT}/policy/guard.py']
+    when:
+      tools: [Write, Edit]
+      modes: [careful]
+    impact: medium
+    on_error: allow
+  modes:
+  - id: careful
+    label: Careful
+  - id: focus
+    label: Focus
+  setup:
+  - id: prefs
+    title: 'My pack: preferences'
+    kind: form
+    fields: [style]
+    after: model
+    help: How long the pack's drafts are.
+  - id: reach
+    title: 'My pack: check this machine'
+    kind: check
+    run: ['${halo_python}', '${CLAUDE_PLUGIN_ROOT}/setup/check.py']
+    what: runs the pack's own check script, which reads the Python version and prints it
+    cost: free
+    time: seconds
+    writes: nothing
+  - id: about
+    title: 'My pack: before you start'
+    kind: note
+    text: setup/about.md
+  themes:
+  - id: night
+    label: A violet night with a green second accent
+    posture: dark
+    palette:
+      bg: '#0d0b14'
+      bg2: '#120f1c'
+      surface: '#171325'
+      surface2: '#201a33'
+      border: '#3a2f57'
+      line: '#9d8cff'
+      text: '#ece6ff'
+      muted: '#a59cc6'
+      faint: '#5d5480'
+      accent: '#b48cff'
+      accent2: '#6fe0a8'
+      accent_ink: '#120a24'
+      ok: '#6fe0a8'
+      warn: '#ffd27a'
+      bad: '#ff7a9a'
+      user: '#c9b3ff'
+      tool: '#ffb38a'
+config:
+  schema:
+    type: object
+    properties:
+      style:
+        type: string
+        enum: [short, long]
+        description: How long the pack's drafts are
+    additionalProperties: false
+  defaults:
+    style: short
+permissions: [hooks, 'mcp:words', studio-script, 'mcp:rg']
+bundle:
+  needs:
+    chat:
+      any_of: ['qwen3:8b', 'llama3.2:3b']
+      window: 8192
+      tools: true
+  reservation:
+    model: chat
+    vram_gb: 6.5
+    keep_alive: -1
+    priority: normal
+  routing:
+    task_work: coder-or-cloud
+    never_evict: reserved
+    escalation: 'on'
+  latency_budget_ms: 2000

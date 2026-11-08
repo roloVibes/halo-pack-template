@@ -1,0 +1,4 @@
+{
+  "name": "my-pack",
+  "description": "The Claude-plugin half of the My pack pack: its commands, skills, hooks and MCP servers, read in place by Halo."
+}

@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "words": {
+      "command": "${halo_python}",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/words_server.py"
+      ]
+    },
+    "rg": {
+      "command": "${halo_python}",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/rg_server.py"
+      ]
+    }
+  }
+}
